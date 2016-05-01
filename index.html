@@ -2,28 +2,73 @@
 <html>
 <head>
 <title>Snake</title>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-
-</head>
-<body>
+<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css ">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js "></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js "></script>
 <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<style >
+
+html, body, .full-height {
+    height: 100%;
+}
+#myCanvas {
+  float: left;
+}
+#scoreboard {
+  background-color: #c3d0ff;
+  height: 30px;
+  float: center;
+}
+#well1 {
+    height: 15%; /*fall back for IE8, Safari 5.1, Opera Mini and pre-4.4 Android browsers*/
+    height: calc(15% - 20px);
+    overflow: hidden; /*better to decide how you want to handle this than to let the browser decide*/
+}
+#well2 {
+    height: 90%;
+    margin-bottom: 0;
+    overflow: auto;
+}
+
+body{background: #222}
+
+</style>
+<body>
 <canvas id="myCanvas" width="1000" height="600" style="border: 1px solid red; background: #222">
 Your browser does not support the HTML5 canvas tag.</canvas>
+
+<div class="container full-height">
+    <div class="row full-height">
+        <div class="col-md-3 full-height">  
+                      
+            <div class="well" id="well2">
+                <div class="list-group" id = "scoreboard"> 
+                    
+                        <h4 class="list-group-item-heading">Heading 1</h4>
+                        <p class="list-group-item-text">Some text...</p>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 var canvas = document.getElementById("myCanvas");
 var context = canvas.getContext("2d");
 var socket = io();
-
+var $scoreboard = $('#scoreboard');
+var counter = 0;
+socket.emit('player name', prompt("please enter your name","name"));
 
 $(window).keydown(function(event) {
-	updatePlayerDir(event.which);
-	socket.emit('direction change', which);
-
+	socket.emit('direction change', event.which);
 });
 
-function updatePlayerDir(which){
-}
 
 function draw(player, food){
 	context.clearRect(0, 0, canvas.width, canvas.height);
@@ -49,6 +94,15 @@ function draw(player, food){
 socket.on('draw', function(data){
 	draw(data.player, data.food);
 });
+
+socket.on('update scorebord', function(data){
+	if(counter%2==0)
+		$scoreboard.append('<div style=background:#ffa31a><strong>'+data.name+' +1 &#160; &#160; &#160; &#160; others -1</strong></div>');
+	else
+		$scoreboard.append('<div style=background:#e0e0d1><strong>'+data.name+' +1 &#160; &#160; &#160; &#160; others -1</strong></div>');
+	counter++;
+});
+
 
 </script> 
 

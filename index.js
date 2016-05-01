@@ -3,6 +3,9 @@ var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 var connection = [], player = [];
 var speed = 6;
+var color= ['#99cc00', '#ffffff', '#0099ff', '#ff6600', 
+'#3333ff', '#66ff66', '#ffff00', '#990099', 'orange', 'purple', 'red', 
+'silver', 'teal', 'white', 'yellow'];
 
 server.listen(3000);
 console.log('server is now running...');
@@ -35,6 +38,7 @@ function Player(snake, name){
     this.prevKey,
     this.snake = snake,
     this.name = name;
+    this.points = 0;
 }
 
 function calcNewTopLeftPoint(oldValue, keyCode1, keyCode2, maxValue, keysPressed){
@@ -46,6 +50,20 @@ function calcNewTopLeftPoint(oldValue, keyCode1, keyCode2, maxValue, keysPressed
 
 function redraw(){
 	io.emit('draw', {player : player, food : food});
+}
+
+function updatePlayeroints(index){
+	for(i = 0; i < player.length; i++){
+		if(i == index)
+			player[i].points++;
+		
+		else{
+			player[i].points--;
+			
+			if(player[i].points > 0)
+				player[i].snake.rectangles.splice(0,1);
+		}
+	}
 }
 
 setInterval(function() {
@@ -76,19 +94,20 @@ setInterval(function() {
 		// collision detection
 		var rect = p.snake.rectangles[0];
 		var borderPoints = [rect.x, rect.y, rect.x+rect.width, rect.y, rect.x, rect.y+rect.height, 
-		rect.x+rect.width, rect.y+rect.height]; // 4 points
+		rect.x+rect.width, rect.y+rect.height, rect.x+rect.width-5, rect.y+rect.height-5]; // 5 points
 		var centerPointX = food.x + 4, centerPointY = food.y + 4;
 
 		for(j = 0; j < 8; j += 2){
 			var dis = Math.sqrt((borderPoints[j]-centerPointX)*(borderPoints[j]-centerPointX) + 
 				(borderPoints[j+1]-centerPointY) * (borderPoints[j+1]-centerPointY));
 
-			console.log(dis);
-			if(dis <= 9.5){
+			if(dis <= 10){
 				food.x = 10 + (1000 - 20) * Math.random();
 				food.y = 10 + (600 - 20) * Math.random();
 
 				p.snake.rectangles.push(new Rectangle(rect.x, rect.y, rect.width, rect.height, rect.color));
+				io.emit('update scorebord', {name : p.name});
+				updatePlayeroints(i);
 				break;
 			}
 		}
@@ -104,7 +123,7 @@ io.on('connection', function(socket){
 
 	// add new player
 	var snake = new Snake();
-	snake.rectangles.push(new Rectangle(10, 10, 20, 20, "#33cc33"));
+	snake.rectangles.push(new Rectangle(10, 10, 20, 20, color[(connection.length-1)%color.length]));
 	player.push(new Player(snake, "player"));
 	redraw();
 
@@ -125,5 +144,9 @@ io.on('connection', function(socket){
 	
 		p.keysPressed[which] = true; 
 		p.prevKey = which;
+	});
+
+	socket.on('player name', function(name){
+		player[player.length-1].name = name;
 	});
 });
