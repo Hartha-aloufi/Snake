@@ -1,132 +1,54 @@
 <!DOCTYPE html>
 <html>
+<head>
+<title>Snake</title>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 
+</head>
 <body>
-
+<script src="/socket.io/socket.io.js"></script>
 <canvas id="myCanvas" width="1000" height="600" style="border: 1px solid red; background: #222">
 Your browser does not support the HTML5 canvas tag.</canvas>
 
 <script>
 var canvas = document.getElementById("myCanvas");
 var context = canvas.getContext("2d");
+var socket = io();
 
-var keysPressed = {},
-    speed = 6, // snake speed
-	prevEvent,
-	player = []; // prev direction
-
-
-var food = {
-	x : 100,
-	y : 100,
-	rad: 7
-}
-
-function Snake(){
-	this.rectangles = [];	
-}
-
-function Rectangle(x, y, width, height, color){
-	this.x = x;
-	this.y = y;
-	this.width = width;
-	this.height = height;
-	this.color = color;
-}
-
-
-function calcNewTopLeftPoint(oldValue, keyCode1, keyCode2, maxValue){
-	var newValue = parseInt(oldValue, 10)
-                   - (keysPressed[keyCode1] ? speed : 0)
-                   + (keysPressed[keyCode2] ? speed : 0);
-    return newValue < 0 ? 0 : newValue > maxValue ? maxValue : newValue;
-}
 
 $(window).keydown(function(event) {
-	if(prevEvent != null) 
-		keysPressed[prevEvent.which] = false;
-	
-	keysPressed[event.which] = true; 
-	prevEvent = event;
+	updatePlayerDir(event.which);
+	socket.emit('direction change', which);
+
 });
 
-var snake = new Snake();
-snake.rectangles.push(new Rectangle(10, 20, 15, 15, "#33cc33"));
-player.push(snake);
+function updatePlayerDir(which){
+}
 
-
-function draw(){
+function draw(player, food){
 	context.clearRect(0, 0, canvas.width, canvas.height);
-	context.fillStyle = "#FF0000";
-
-	context.fillRect(food.x, food.y, 10, 10);
-	//context.fill();
-	context.fillStyle = "blue";
-	context.stroke();
-	context.fillStyle = "black";
 
 	// draw snakes
 	for(i = 0; i < player.length; i++){
-		for(j = 0; j < player[i].rectangles.length; j++){
-			var rect = player[i].rectangles[j];
+		for(j = 0; j < player[i].snake.rectangles.length; j++){
+			var rect = player[i].snake.rectangles[j];
 			context.fillStyle = rect.color;
 			context.fillRect(rect.x, rect.y, rect.width, rect.height);
 		}
 
 	}
+
+	// draw the food
+	context.fillStyle = "#FF0000";
+	context.fillRect(food.x, food.y, 10, 10);
 }
 
-setInterval(function() {
-
-	// update all players snakes posiions
-	for(i = 0; i < player.length; i++){
-		var newX = calcNewTopLeftPoint(snake.rectangles[0].x, 37, 39, canvas.width - snake.rectangles[0].width);    
-		var newY = calcNewTopLeftPoint(snake.rectangles[0].y, 38, 40, canvas.height - snake.rectangles[0].height); 
-
-		// if the head of snake didn't moved
-		if(newX == player[i].rectangles[0].x && newY == player[i].rectangles[0].y)
-			continue;
 
 
-		// move the head
-		player[i].rectangles[0].x = newX;
-		player[i].rectangles[0].y = newY;
-
-
-		// move the body of the snake
-		for(j = player[i].rectangles.length -1; j > 0; j--){
-			player[i].rectangles[j].x = player[i].rectangles[j-1].x;
-			player[i].rectangles[j].y = player[i].rectangles[j-1].y;
-		}
-
-
-		// collision detection
-		var rect = player[i].rectangles[0];
-		var borderPoints = [rect.x, rect.y, rect.x+rect.width, rect.y, rect.x, rect.y+rect.height, 
-		rect.x+rect.width, rect.y+rect.height]; // 4 points
-		
-		for(j = 0; j < 8; j += 2){
-			var dis = Math.sqrt((borderPoints[j]-food.x)*(borderPoints[j]-food.x) + 
-				(borderPoints[j+1]-food.y) * (borderPoints[j+1]-food.y));
-
-
-			if(dis <= 8){
-				food.x = 10 + (canvas.width - 20) * Math.random();
-				food.y = 10 + (canvas.height - 20) * Math.random();
-
-				player[i].rectangles.push(new Rectangle(rect.x, rect.y, rect.width, rect.height, rect.color));
-				console.log(plaer[i].rectangles.length);
-				break;
-			}
-		}
-
-
-	}
-
-	draw();
-	
-}, 20);
+// socket.io
+socket.on('draw', function(data){
+	draw(data.player, data.food);
+});
 
 </script> 
 

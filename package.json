@@ -23,6 +23,6 @@
   "homepage": "https://github.com/Hartha-aloufi/Snake#readme",
   "dependencies" : {
     "express" : "*",
-    "socket.io" : "*"
+    "socket.io": "^1.4.5"
   }
 }
