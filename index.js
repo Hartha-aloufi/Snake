@@ -58,10 +58,11 @@ function updatePlayeroints(index){
 			player[i].points++;
 		
 		else{
-			player[i].points--;
+			if(player[i].points > 0)
+				player[i].points--;
 			
 			if(player[i].points > 0)
-				player[i].snake.rectangles.splice(0,1);
+				player[i].snake.rectangles.splice(0,2);
 		}
 	}
 }
@@ -106,15 +107,16 @@ setInterval(function() {
 				food.y = 10 + (600 - 20) * Math.random();
 
 				p.snake.rectangles.push(new Rectangle(rect.x, rect.y, rect.width, rect.height, rect.color));
-				io.emit('update scorebord', {name : p.name});
+				p.snake.rectangles.push(new Rectangle(rect.x, rect.y, rect.width, rect.height, rect.color));
 				updatePlayeroints(i);
+				io.emit('update scorebord', {player : player, index : i});
 				break;
 			}
 		}
 		redraw();
 	}
 
-}, 20);
+}, 15);
 
 
 io.on('connection', function(socket){
@@ -148,5 +150,11 @@ io.on('connection', function(socket){
 
 	socket.on('player name', function(name){
 		player[player.length-1].name = name;
+	});
+
+	socket.on('send message', function(message){
+		var name = player[connection.indexOf(socket)].name;
+
+		io.emit('send message', {name : name, message : message});
 	});
 });
