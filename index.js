@@ -1,6 +1,8 @@
 var app = require('express')();
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
+var mongoose = require('mongoose');
+var dateformat = require('dateformat');
 var connection = [], player = [];
 var speed = 6;
 var color= ['#99cc00', '#ffffff', '#0099ff', '#ff6600', 
@@ -13,6 +15,24 @@ console.log('server is now running...');
 app.get('/', function(req, res){
 	res.sendFile(__dirname + '/index.html');
 });
+
+// ----------- database --------- \\
+var con = mongoose.connect('mongodb://localhost/snake');
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'mongodb connection error :'))
+db.once('open', function(){
+	console.log('connected to the database');
+});
+
+var playerdataSchema = mongoose.Schema({
+	name : String,
+	score : Number,
+	date : Date
+});
+
+var PlayerData = mongoose.model('PlayerData', playerdataSchema);
+
+// ------------------------------- \\
 
 
 var food = {
@@ -54,8 +74,25 @@ function redraw(){
 
 function updatePlayeroints(index){
 	for(i = 0; i < player.length; i++){
-		if(i == index)
+		if(i == index){
 			player[i].points++;
+			var points = player[i].points, name = player[i].name;
+
+			PlayerData.findOne({}).sort({score : -1}).exec(function(err, doc){
+				if( !doc || points > doc.score){
+					var newScore = new PlayerData();
+					newScore.name = name;
+					newScore.score = points;
+					newScore.date = Date.now("YYYY-mm-dd");
+
+					newScore.save(function(err, newScore){
+						if(err) throw err;
+						console.log('max score updated');
+					});
+					
+				}
+			});
+		}
 		
 		else{
 			if(player[i].points > 0)
@@ -109,7 +146,12 @@ setInterval(function() {
 				p.snake.rectangles.push(new Rectangle(rect.x, rect.y, rect.width, rect.height, rect.color));
 				p.snake.rectangles.push(new Rectangle(rect.x, rect.y, rect.width, rect.height, rect.color));
 				updatePlayeroints(i);
-				io.emit('update scorebord', {player : player, index : i});
+				
+				PlayerData.findOne({}).sort({score : -1}).exec(function(err, doc){
+					io.emit('update scorebord', {player : player, index : i, maxScore :{ max : doc.score, 
+							name : doc.name, date : dateformat(doc.date, "dd - mm - yyyy")}});
+				
+				});
 				break;
 			}
 		}

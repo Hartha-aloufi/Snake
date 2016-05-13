@@ -51,6 +51,12 @@ background: ##8c8c8c ;
 .well::-webkit-scrollbar {
  display: none;
 }
+
+#maxScore{
+	font-size : 80%;
+	background: #33001a;
+	color: white;
+}
 </style>
 
 <body>
@@ -119,7 +125,7 @@ socket.on('draw', function(data){
 
 socket.on('update scorebord', function(data){
 
-	//elem.scrollTop = elem.scrollHeight;
+	// elem.scrollTop = elem.scrollHeight;
 	$scoreboard.scrollTop = $scoreboard.scrollHeight;
 	var str = '';
 	for(i = 0; i < data.player.length; i++){
@@ -130,7 +136,8 @@ socket.on('update scorebord', function(data){
 	}
 
 
-	$scoreboard.append('<div class="list-group"><div class="list-group-item"><h4 class="list-group-item-heading">Scorebord</h4><pre>' + str +
+	$scoreboard.append('<div class="list-group"><div class="list-group-item"><h4 class="list-group-item-heading">Scorebord</h4><p id = maxScore>&#160;&#160;max score : '+data.maxScore.max+'&#160;&#160;&#160;&#160;&#160;&#160;by : '+data.maxScore.name+'&#160;&#160;&#160;&#160;&#160;'+
+		data.maxScore.date+'</p><pre>' + str +
 		'</pre></div></div>');
 	
 	// auto scrolling down
