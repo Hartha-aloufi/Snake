@@ -9,7 +9,7 @@ var color= ['#99cc00', '#ffffff', '#0099ff', '#ff6600',
 '#3333ff', '#66ff66', '#ffff00', '#990099', 'orange', 'purple', 'red', 
 'silver', 'teal', 'white', 'yellow'];
 
-server.listen(3000);
+server.listen(process.env.PORT || 8080);
 console.log('server is now running...');
 
 app.get('/', function(req, res){
@@ -80,11 +80,11 @@ function updatePlayeroints(index){
 
 			PlayerData.findOne({}).sort({score : -1}).exec(function(err, doc){
 				if( !doc || points > doc.score){
-					var newScore = new PlayerData();
-					newScore.name = name;
-					newScore.score = points;
-					newScore.date = Date.now("YYYY-mm-dd");
-
+					var newScore = new PlayerData({
+						name : name,
+						score : points,
+						date : Date.now("YYYY-mm-dd")
+					});
 					newScore.save(function(err, newScore){
 						if(err) throw err;
 						console.log('max score updated');
