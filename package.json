@@ -26,6 +26,7 @@
     "socket.io": "^1.4.5"
   },
   "devDependencies": {
+    "hacktimer": "^1.1.0",
     "serve-static": "^1.11.2"
   }
 }
