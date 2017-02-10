@@ -120,12 +120,14 @@ setInterval(function() {
 				(borderPoints[j+1]-centerPointY) * (borderPoints[j+1]-centerPointY));
 
 			if(dis <= 10){
-				food.x = 10 + (1000 - 20) * Math.random();
-				food.y = 10 + (600 - 20) * Math.random();
+				let x = 10 + (1000 - 20) * Math.random();
+				let y = 10 + (600 - 20) * Math.random();
 
 				p.snake.rectangles.push(new Rectangle(rect.x, rect.y, rect.width, rect.height, rect.color));
 				p.snake.rectangles.push(new Rectangle(rect.x, rect.y, rect.width, rect.height, rect.color));
-				updatePlayeroints(i);
+				// updatePlayeroints(i);
+
+				socket.emit('change food pos', {x : x, y : y})
 			}
 		}
 	}
