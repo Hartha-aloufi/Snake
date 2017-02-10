@@ -7,8 +7,7 @@
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css ">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js "></script>
   <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js "></script>
-<script src="/socket.io/socket.io.js"></script>
-</head>
+  </head>
 
 <style >
 html, body, .full-height {
@@ -18,7 +17,7 @@ html, body, .full-height {
 }
 #myCanvas {
   float: left;
-  
+
   overflow:hidden;
 }
 .left-side{
@@ -67,8 +66,8 @@ Your browser does not support the HTML5 canvas tag.</canvas>
 
 <div class="container full-height right-side">
     <div class="row full-height">
-        <div class="col-md-12 full-height" id="x">  
-                 
+        <div class="col-md-12 full-height" id="x">
+
             <div class="well" id="well2">
             </div>
 <form id="form">
@@ -80,91 +79,10 @@ Your browser does not support the HTML5 canvas tag.</canvas>
     </div>
 
 </div>
-
-
-
-<script>
-var canvas = document.getElementById("myCanvas");
-var context = canvas.getContext("2d");
-var socket = io();
-var $scoreboard = $('#well2');
-var counter = 0;
-var $chat = $('#form');
-
-socket.emit('player name', prompt("please enter your name","name"));
-
-$(window).keydown(function(event) {
-	socket.emit('direction change', event.which);
-});
-
-
-function draw(player, food){
-	context.clearRect(0, 0, canvas.width, canvas.height);
-
-	// draw snakes
-	for(i = 0; i < player.length; i++){
-		for(j = 0; j < player[i].snake.rectangles.length; j++){
-			var rect = player[i].snake.rectangles[j];
-			context.fillStyle = rect.color;
-			context.fillRect(rect.x, rect.y, rect.width, rect.height);
-		}
-
-	}
-
-	// draw the food
-	context.fillStyle = "#FF0000";
-	context.fillRect(food.x, food.y, 10, 10);
-}
-
-
-
-// socket.io
-socket.on('draw', function(data){
-	draw(data.player, data.food);
-});
-
-socket.on('update scorebord', function(data){
-
-	// elem.scrollTop = elem.scrollHeight;
-	$scoreboard.scrollTop = $scoreboard.scrollHeight;
-	var str = '';
-	for(i = 0; i < data.player.length; i++){
-		str += data.player[i].name + ' : ' + data.player[i].points;
-
-		if(i+1 != data.player.lenght)
-			str += '<br/>'
-	}
-
-
-	$scoreboard.append('<div class="list-group"><div class="list-group-item"><h4 class="list-group-item-heading">Scorebord</h4><p id = maxScore>&#160;&#160;max score : '+data.maxScore.max+'&#160;&#160;&#160;&#160;&#160;&#160;by : '+data.maxScore.name+'&#160;&#160;&#160;&#160;&#160;'+
-		data.maxScore.date+'</p><pre>' + str +
-		'</pre></div></div>');
-	
-	// auto scrolling down
-	var objDiv = document.getElementById("well2");
-	objDiv.scrollTop = objDiv.scrollHeight;
-
-
-});
-
-$chat.submit(function(){
-	if($('#message').val() != '')
-		socket.emit('send message', $('#message').val());
-	$('#message').val('');
-	return false;
-});
-
-socket.on('send message', function(data){
-	var str = '<pre><strong>' +data.name+': '+data.message+'</strong></pre>';
-	$scoreboard.append(str);
-
-	// auto scrolling down
-	var objDiv = document.getElementById("well2");
-	objDiv.scrollTop = objDiv.scrollHeight;
-
-});
-
-</script> 
+<script src="/socket.io/socket.io.js"></script>
+<script src="classes.js"></script>
+<script src="index.js"></script>
+<script src="clientNetworking.js"></script>
 
 </body>
 </html>

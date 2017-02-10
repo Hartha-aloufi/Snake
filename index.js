@@ -1,117 +1,97 @@
-var app = require('express')();
-var server = require('http').createServer(app);
-var io = require('socket.io').listen(server);
-var mongoose = require('mongoose');
-var dateformat = require('dateformat');
-var connection = [], player = [];
-var speed = 6;
-var color= ['#99cc00', '#ffffff', '#0099ff', '#ff6600', 
-'#3333ff', '#66ff66', '#ffff00', '#990099', 'orange', 'purple', 'red', 
+let player = [];
+let speed = 6;
+let color= ['#99cc00', '#ffffff', '#0099ff', '#ff6600',
+'#3333ff', '#66ff66', '#ffff00', '#990099', 'orange', 'purple', 'red',
 'silver', 'teal', 'white', 'yellow'];
 
-server.listen(process.env.PORT || 8080);
-console.log('server is now running...');
+let food = {	x : 100,	y : 100,	rad : 7}
+let canvas = document.getElementById("myCanvas");
+let context = canvas.getContext("2d");
+let socket = io();
+let $scoreboard = $('#well2');
+let counter = 0;
+let $chat = $('#form');
 
-app.get('/', function(req, res){
-	res.sendFile(__dirname + '/index.html');
+let playerName = prompt("please enter your name","name");
+
+
+function draw(){
+	context.clearRect(0, 0, canvas.width, canvas.height);
+
+	// draw snakes
+	for(i = 0; i < player.length; i++){
+		for(j = 0; j < player[i].snake.rectangles.length; j++){
+			let rect = player[i].snake.rectangles[j];
+			context.fillStyle = rect.color;
+			context.fillRect(rect.x, rect.y, rect.width, rect.height);
+		}
+
+	}
+
+	// draw the food
+	context.fillStyle = "#FF0000";
+	context.fillRect(food.x, food.y, 10, 10);
+}
+
+
+socket.on('update scorebord', function(data){
+
+	// elem.scrollTop = elem.scrollHeight;
+	$scoreboard.scrollTop = $scoreboard.scrollHeight;
+	let str = '';
+	for(i = 0; i < data.player.length; i++){
+		str += data.player[i].name + ' : ' + data.player[i].points;
+
+		if(i+1 != data.player.lenght)
+			str += '<br/>'
+	}
+
+
+	$scoreboard.append('<div class="list-group"><div class="list-group-item"><h4 class="list-group-item-heading">Scorebord</h4><p id = maxScore>&#160;&#160;max score : '+data.maxScore.max+'&#160;&#160;&#160;&#160;&#160;&#160;by : '+data.maxScore.name+'&#160;&#160;&#160;&#160;&#160;'+
+		data.maxScore.date+'</p><pre>' + str +
+		'</pre></div></div>');
+
+	// auto scrolling down
+	let objDiv = document.getElementById("well2");
+	objDiv.scrollTop = objDiv.scrollHeight;
+
+
 });
 
-// ----------- database --------- \\
-var con = mongoose.connect('mongodb://localhost/snake');
-var db = mongoose.connection;
-db.on('error', console.error.bind(console, 'mongodb connection error :'))
-db.once('open', function(){
-	console.log('connected to the database');
+$chat.submit(function(){
+	if($('#message').val() != '')
+		socket.emit('send message', $('#message').val());
+	$('#message').val('');
+	return false;
 });
 
-var playerdataSchema = mongoose.Schema({
-	name : String,
-	score : Number,
-	date : Date
+socket.on('send message', function(data){
+	let str = '<pre><strong>' +data.name+': '+data.message+'</strong></pre>';
+	$scoreboard.append(str);
+
+	// auto scrolling down
+	let objDiv = document.getElementById("well2");
+	objDiv.scrollTop = objDiv.scrollHeight;
+
 });
 
-var PlayerData = mongoose.model('PlayerData', playerdataSchema);
-
-// ------------------------------- \\
-
-
-var food = {
-	x : 100,
-	y : 100,
-	rad: 7
-}
-
-function Snake(){
-	this.rectangles = [];	
-}
-
-function Rectangle(x, y, width, height, color){
-	this.x = x;
-	this.y = y;
-	this.width = width;
-	this.height = height;
-	this.color = color;
-}
-
-function Player(snake, name){
-	this.keysPressed = {},
-    this.prevKey,
-    this.snake = snake,
-    this.name = name;
-    this.points = 0;
-}
 
 function calcNewTopLeftPoint(oldValue, keyCode1, keyCode2, maxValue, keysPressed){
-	var newValue = oldValue
+	let newValue = oldValue
                    - (keysPressed[keyCode1] ? speed : 0)
                    + (keysPressed[keyCode2] ? speed : 0);
     return newValue < 0 ? 0 : newValue > maxValue ? maxValue : newValue;
 }
 
-function redraw(){
-	io.emit('draw', {player : player, food : food});
-}
-
-function updatePlayeroints(index){
-	for(i = 0; i < player.length; i++){
-		if(i == index){
-			player[i].points++;
-			var points = player[i].points, name = player[i].name;
-
-			PlayerData.findOne({}).sort({score : -1}).exec(function(err, doc){
-				if( !doc || points > doc.score){
-					var newScore = new PlayerData({
-						name : name,
-						score : points,
-						date : Date.now("YYYY-mm-dd")
-					});
-					newScore.save(function(err, newScore){
-						if(err) throw err;
-						console.log('max score updated');
-					});
-					
-				}
-			});
-		}
-		
-		else{
-			if(player[i].points > 0)
-				player[i].points--;
-			
-			if(player[i].points > 0)
-				player[i].snake.rectangles.splice(0,2);
-		}
-	}
-}
 
 setInterval(function() {
 
 	// update all players snakes positions
 	for(i = 0; i < player.length; i++){
-		var p = player[i];
+		let p = player[i];
 
-		var newX = calcNewTopLeftPoint(p.snake.rectangles[0].x, 37, 39, 1000 - p.snake.rectangles[0].width, p.keysPressed);    
-		var newY = calcNewTopLeftPoint(p.snake.rectangles[0].y, 38, 40, 600 - p.snake.rectangles[0].height, p.keysPressed); 
+		let newX = calcNewTopLeftPoint(p.snake.rectangles[0].x, 37, 39, 1000 - p.snake.rectangles[0].width, p.keysPressed);
+		let newY = calcNewTopLeftPoint(p.snake.rectangles[0].y, 38, 40, 600 - p.snake.rectangles[0].height, p.keysPressed);
 
 		//if the head of snake didn't moved
 		if(newX == p.snake.rectangles[0].x && newY == p.snake.rectangles[0].y)
@@ -130,13 +110,13 @@ setInterval(function() {
 
 
 		// collision detection
-		var rect = p.snake.rectangles[0];
-		var borderPoints = [rect.x, rect.y, rect.x+rect.width, rect.y, rect.x, rect.y+rect.height, 
+		let rect = p.snake.rectangles[0];
+		let borderPoints = [rect.x, rect.y, rect.x+rect.width, rect.y, rect.x, rect.y+rect.height,
 		rect.x+rect.width, rect.y+rect.height, rect.x+rect.width-5, rect.y+rect.height-5]; // 5 points
-		var centerPointX = food.x + 4, centerPointY = food.y + 4;
+		let centerPointX = food.x + 4, centerPointY = food.y + 4;
 
 		for(j = 0; j < 8; j += 2){
-			var dis = Math.sqrt((borderPoints[j]-centerPointX)*(borderPoints[j]-centerPointX) + 
+			let dis = Math.sqrt((borderPoints[j]-centerPointX)*(borderPoints[j]-centerPointX) +
 				(borderPoints[j+1]-centerPointY) * (borderPoints[j+1]-centerPointY));
 
 			if(dis <= 10){
@@ -146,57 +126,9 @@ setInterval(function() {
 				p.snake.rectangles.push(new Rectangle(rect.x, rect.y, rect.width, rect.height, rect.color));
 				p.snake.rectangles.push(new Rectangle(rect.x, rect.y, rect.width, rect.height, rect.color));
 				updatePlayeroints(i);
-				
-				PlayerData.findOne({}).sort({score : -1}).exec(function(err, doc){
-					io.emit('update scorebord', {player : player, index : i, maxScore :{ max : doc.score, 
-							name : doc.name, date : dateformat(doc.date, "dd - mm - yyyy")}});
-				
-				});
-				break;
 			}
 		}
-		redraw();
 	}
 
-}, 15);
-
-
-io.on('connection', function(socket){
-	console.log('new player in');
-	connection.push(socket);
-
-	// add new player
-	var snake = new Snake();
-	snake.rectangles.push(new Rectangle(10, 10, 20, 20, color[(connection.length-1)%color.length]));
-	player.push(new Player(snake, "player"));
-	redraw();
-
-	// disconnect
-	socket.on('disconnect', function(){
-		var playerIndex = connection.indexOf(socket);
-		player.splice(playerIndex, 1);
-		connection.splice(playerIndex, 1);
-		console.log('player number ' + (playerIndex + 1) + ' disconnect');
-	});
-
-	// detect player direction changes
-	socket.on('direction change', function(which){
-		var p = player[connection.indexOf(socket)];
-
-		if(p.prevKey != null) 
-			p.keysPressed[p.prevKey] = false;
-	
-		p.keysPressed[which] = true; 
-		p.prevKey = which;
-	});
-
-	socket.on('player name', function(name){
-		player[player.length-1].name = name;
-	});
-
-	socket.on('send message', function(message){
-		var name = player[connection.indexOf(socket)].name;
-
-		io.emit('send message', {name : name, message : message});
-	});
-});
+	draw();
+}, 30);

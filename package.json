@@ -4,7 +4,7 @@
   "description": "simple collaborative snake game.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
@@ -21,8 +21,11 @@
     "url": "https://github.com/Hartha-aloufi/Snake/issues"
   },
   "homepage": "https://github.com/Hartha-aloufi/Snake#readme",
-  "dependencies" : {
-    "express" : "*",
+  "dependencies": {
+    "express": "*",
     "socket.io": "^1.4.5"
+  },
+  "devDependencies": {
+    "serve-static": "^1.11.2"
   }
 }
